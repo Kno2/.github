@@ -1,0 +1,8 @@
+{
+    "name": "Kno2 .Net Framework CI Workflow",
+    "description": "Kno2 CI starter workflow for .net framework projects",
+    "iconName": "example-icon",
+    "categories": [
+        "csharp"
+    ]
+}
