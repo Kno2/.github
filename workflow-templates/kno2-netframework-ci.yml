@@ -1,0 +1,46 @@
+name: Kno2 .Net Framework CI
+
+on:
+  pull_request:
+    branches: [ $default-branch ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+
+    - uses: nuget/setup-nuget@v1
+    
+    - name: Adjust NuGet Config Credentials
+      run: |
+        mv nuget.ci.config nuget.config
+        (Get-Content nuget.config) -replace '\${USER}', "${{ secrets.TC_NUGET_USER }}" -replace '\${PAT}', "${{ secrets.TC_NUGET_PASSWORD }}" | Out-File -Encoding "UTF8" nuget.config
+    
+    - name: Restore Nuget Packages 
+      run: nuget restore src\SOLUTIONFILENAME.sln
+
+    - run: |
+      msbuild src\SOLUTIONFILENAME.sln -t:rebuild -property:Configuration=Release /m /nr:false /nologo /v:m /p:UseSharedCompilation=false 
+
+    - name: Install NUnit.ConsoleRunner
+      run: nuget install NUnit.ConsoleRunner -Version 3.13.2 -DirectDownload -OutputDirectory .
+
+    - name: Fetch transform code
+      run: |
+        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/nunit/nunit-transforms/master/nunit3-junit/nunit3-junit.xslt" -OutFile "nunit3-junit.xslt"
+    
+    - name: Run UnitTests
+      run: ./NUnit.ConsoleRunner.3.13.2/tools/nunit3-console.exe  src/Kno2.MessageReport.Tests/bin/Release/Kno2.MessageReport.Tests.dll --result="nunit3-testresults.xml;transform=nunit3-junit.xslt"
+
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: success() || failure()    # run this step even if previous step failed
+      with:
+        name: Unit Tests            # Name of the check run which will be created
+        path: "*testresults.xml"    # Path to test results
+        reporter: jest-junit        # Format of test results
