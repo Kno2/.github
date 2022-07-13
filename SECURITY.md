@@ -12,7 +12,7 @@ We welcome the contribution of external security researchers.
 If you believe you’ve found a security issue in any software, service, or
 website governed by unified, we encourage you to notify us.
 
-Projects governed by unified sometimes do unsafe things by design (such as a
+Projects sometimes do unsafe things by design (such as a
 plugin that executes arbitrary code or an option that is dangerous).
 This unsafe behavior should be explicitly documented and, if it is, is not
 considered a security issue.
