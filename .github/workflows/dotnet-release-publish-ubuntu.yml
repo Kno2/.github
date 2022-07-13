@@ -63,7 +63,7 @@ jobs:
       run:  dotnet pack --no-build --configuration Release -o ./ -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg /p:VersionPrefix="${{ steps.gitversion.outputs.nuGetVersionV2 }}" ${{ inputs.projectToPackagePath }}
     - name: Package with Build
       if: ${{ inputs.buildWhenPacking }}
-      run:  dotnet pack --no-build --configuration Release -o ./ -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg /p:VersionPrefix="${{ steps.gitversion.outputs.nuGetVersionV2 }}" ${{ inputs.projectToPackagePath }}
+      run:  dotnet pack --configuration Release -o ./ -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg /p:VersionPrefix="${{ steps.gitversion.outputs.nuGetVersionV2 }}" ${{ inputs.projectToPackagePath }}
 
     - name: Publish Nuget Package
       run: dotnet nuget push "${{ inputs.nugetPackageName }}.${{ steps.gitversion.outputs.nuGetVersionV2 }}.nupkg" --api-key "${{ secrets.GITHUB_TOKEN }}" --source "github"
