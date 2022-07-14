@@ -1,8 +1,6 @@
 name: Pull Request Build
-branding:
-  icon: play
-  color: green
 author: 'Kno2'
+
 on:
   workflow_call:
     inputs:
