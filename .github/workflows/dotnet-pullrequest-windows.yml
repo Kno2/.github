@@ -6,6 +6,11 @@ on:
       solutionPath:
         required: true
         type: string
+      usePackageLock:
+        description: Whether to use the nuget package lock
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   ci-build:
@@ -28,13 +33,25 @@ jobs:
           3.1.x
           6.0.x
 
+    - uses: actions/cache@v2
+      with:
+        path: ${{ github.workspace }}/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+          
     - name: Adjust NuGet Config Credentials
       run: |
         mv nuget.ci.config nuget.config
         (Get-Content nuget.config) -replace '\${USER}', "${{ secrets.TC_NUGET_USER }}" -replace '\${PAT}', "${{ secrets.TC_NUGET_PASSWORD }}" -replace '\${GH_PAT}', "${{ secrets.GHACTION_REPO }}" | Out-File nuget.config
     
     - name: Restore dependencies
+      if: ${{ ! inputs.usePackageLock }}
       run: dotnet restore ${{ inputs.solutionPath }}
+    
+    - name: Restore dependencies
+      if: ${{ inputs.usePackageLock }}
+      run: dotnet restore --locked-mode ${{ inputs.solutionPath }}
     
     - name: Build
       run: dotnet build --no-restore --configuration Release ${{ inputs.solutionPath }}
