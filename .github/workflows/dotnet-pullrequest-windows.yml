@@ -1,0 +1,90 @@
+name: Pull Request Build
+
+on:
+  workflow_call:
+    inputs:
+      solutionPath:
+        required: true
+        type: string
+
+jobs:
+  ci-build:
+    name: CI
+    runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      id-token: write
+      checks: write
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Adjust NuGet Config Credentials
+      run: |
+        mv nuget.ci.config nuget.config
+        (Get-Content nuget.config) -replace '\${USER}', "${{ secrets.TC_NUGET_USER }}" -replace '\${PAT}', "${{ secrets.TC_NUGET_PASSWORD }}" -replace '\${GH_PAT}', "${{ secrets.GHACTION_REPO }}" | Out-File nuget.config
+    
+    - name: Restore dependencies
+      run: dotnet restore ${{ inputs.solutionPath }}
+    
+    - name: Build
+      run: dotnet build --no-restore --configuration Release ${{ inputs.solutionPath }}
+    
+    - name: Test
+      run: dotnet test --no-build --verbosity normal --logger:"trx;LogFileName=TestResults.xml" ${{ inputs.solutionPath }}
+
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: Event File
+        path: ${{ github.event_path }}
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: Unit Test Results
+        path: "*testresults.xml"
+
+  unit-test-results:
+    name: Publish Unit Test Results
+    needs: ci-build
+    runs-on: ubuntu-latest
+    if: success() || failure()
+
+    permissions:
+      checks: write
+      contents: read
+      issues: read
+      pull-requests: write
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+      
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          report_individual_runs: "true"
+          commit: ${{ github.event.workflow_run.head_sha }}
+          event_file: artifacts/Event File/event.json
+          event_name: ${{ github.event.workflow_run.event }}
+          files: "artifacts/**/*.xml"
+    
