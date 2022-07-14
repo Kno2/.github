@@ -47,11 +47,11 @@ jobs:
     - name: Determine Version
       id: gitversion
       uses: gittools/actions/gitversion/execute@v0.9.13
+    
     - name: Adjust NuGet Config Credentials
       run: |
-        rm -f ./nuget.config
         mv nuget.ci.config nuget.config
-        echo $(sed -e "s/\${USER}/${{ secrets.TC_NUGET_USER }}/" -e "s@\${PAT}@${{ secrets.TC_NUGET_PASSWORD }}@" -e "s@\${GH_PAT}@${{ secrets.GHACTION_REPO }}@" nuget.config) >nuget.config
+        (Get-Content nuget.config) -replace '\${USER}', "${{ secrets.TC_NUGET_USER }}" -replace '\${PAT}', "${{ secrets.TC_NUGET_PASSWORD }}" -replace '\${GH_PAT}', "${{ secrets.GHACTION_REPO }}" | Out-File nuget.config
     
     - name: Restore dependencies
       run: dotnet restore ${{ inputs.solutionPath }}
@@ -59,7 +59,7 @@ jobs:
       run: dotnet build --no-restore --configuration Release ${{ inputs.solutionPath }}
 
     - name: Add Kno2 Github Package Repo
-      run: dotnet nuget add source --username kno2engineering --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/Kno2/index.json"
+      run: dotnet nuget add source --username ${{ secrets.GH_USER }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/Kno2/index.json"
 
     - name: Package API
       if: ${{ ! inputs.buildWhenPacking }}
