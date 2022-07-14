@@ -1,0 +1,75 @@
+name: .NET Release Creation
+
+on:
+  workflow_call:
+    inputs:
+      solutionPath:
+        required: true
+        type: string
+      nugetPackageName:
+        required: true
+        type: string
+      projectToPackagePath:
+        required: true
+        type: string
+      buildWhenPacking:
+        description: Whether to build the release again when packing
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  release:
+    name: Create and Publish Packages
+    runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      id-token: write
+      checks: write
+      packages: write
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: |
+        3.1.x
+        6.0.x
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0.9.13
+      with:
+        versionSpec: '5.x'
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0.9.13
+    - name: Adjust NuGet Config Credentials
+      run: |
+        rm -f ./nuget.config
+        mv nuget.ci.config nuget.config
+        echo $(sed -e "s/\${USER}/${{ secrets.TC_NUGET_USER }}/" -e "s@\${PAT}@${{ secrets.TC_NUGET_PASSWORD }}@" -e "s@\${GH_PAT}@${{ secrets.GHACTION_REPO }}@" nuget.config) >nuget.config
+    
+    - name: Restore dependencies
+      run: dotnet restore ${{ inputs.solutionPath }}
+    - name: Build
+      run: dotnet build --no-restore --configuration Release ${{ inputs.solutionPath }}
+
+    - name: Add Kno2 Github Package Repo
+      run: dotnet nuget add source --username kno2engineering --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/Kno2/index.json"
+
+    - name: Package API
+      if: ${{ ! inputs.buildWhenPacking }}
+      run:  dotnet pack --no-build --configuration Release -o ./ -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg /p:VersionPrefix="${{ steps.gitversion.outputs.nuGetVersionV2 }}" ${{ inputs.projectToPackagePath }}
+    - name: Package with Build
+      if: ${{ inputs.buildWhenPacking }}
+      run:  dotnet pack --configuration Release -o ./ -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg /p:VersionPrefix="${{ steps.gitversion.outputs.nuGetVersionV2 }}" ${{ inputs.projectToPackagePath }}
+
+    - name: Publish Nuget Package
+      run: dotnet nuget push "${{ inputs.nugetPackageName }}.${{ steps.gitversion.outputs.nuGetVersionV2 }}.nupkg" --api-key "${{ secrets.GITHUB_TOKEN }}" --source "github"
+    
+    - name: Publish Symbol Package
+      run: dotnet nuget push "${{ inputs.nugetPackageName }}.${{ steps.gitversion.outputs.nuGetVersionV2 }}.snupkg" --api-key "${{ secrets.GITHUB_TOKEN }}" --source "github"

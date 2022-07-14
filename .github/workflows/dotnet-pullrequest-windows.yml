@@ -40,7 +40,7 @@ jobs:
       run: dotnet build --no-restore --configuration Release ${{ inputs.solutionPath }}
     
     - name: Test
-      run: dotnet test --no-build --configuration Release --verbosity normal --logger:"trx;LogFileName=TestResults.xml" ${{ inputs.solutionPath }}
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger:"trx;LogFileName=TestResults.trx" ${{ inputs.solutionPath }}
 
     - name: Upload
       uses: actions/upload-artifact@v3
@@ -53,7 +53,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: Unit Test Results
-        path: "src/**/TestResults.xml"
+        path: "src/**/TestResults.trx"
 
   unit-test-results:
     name: Publish Unit Test Results
