@@ -40,7 +40,7 @@ jobs:
       run: dotnet build --no-restore --configuration Release ${{ inputs.solutionPath }}
     
     - name: Test
-      run: dotnet test --no-build --configuration Release --verbosity normal --logger:"trx;LogFileName=TestResults.trx" ${{ inputs.solutionPath }}
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger:"trx;LogFileName=TestResults.xml" ${{ inputs.solutionPath }}
 
     - name: Upload
       uses: actions/upload-artifact@v3
@@ -53,7 +53,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: Unit Test Results
-        path: "src/**/TestResults.trx"
+        path: "src/**/TestResults.xml"
 
   unit-test-results:
     name: Publish Unit Test Results
@@ -88,5 +88,5 @@ jobs:
           commit: ${{ github.event.workflow_run.head_sha }}
           event_file: artifacts/Event File/event.json
           event_name: ${{ github.event.workflow_run.event }}
-          trx_files: "**/*.trx"
+          trx_files: "**/*.xml"
     
