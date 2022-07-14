@@ -6,6 +6,11 @@ on:
       solutionPath:
         required: true
         type: string
+      usePackageLock:
+        description: Whether to use the nuget package lock
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   ci-build:
@@ -34,7 +39,12 @@ jobs:
         (Get-Content nuget.config) -replace '\${USER}', "${{ secrets.TC_NUGET_USER }}" -replace '\${PAT}', "${{ secrets.TC_NUGET_PASSWORD }}" -replace '\${GH_PAT}', "${{ secrets.GHACTION_REPO }}" | Out-File nuget.config
     
     - name: Restore dependencies
+      if: ${{ ! inputs.usePackageLock }}
       run: dotnet restore ${{ inputs.solutionPath }}
+    
+    - name: Restore dependencies
+      if: ${{ inputs.usePackageLock }}
+      run: dotnet restore --locked-mode ${{ inputs.solutionPath }}
     
     - name: Build
       run: dotnet build --no-restore --configuration Release ${{ inputs.solutionPath }}
