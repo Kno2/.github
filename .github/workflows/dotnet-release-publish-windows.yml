@@ -73,3 +73,10 @@ jobs:
     
     - name: Publish Symbol Package
       run: dotnet nuget push "${{ inputs.nugetPackageName }}.${{ steps.gitversion.outputs.nuGetVersionV2 }}.snupkg" --api-key "${{ secrets.GITHUB_TOKEN }}" --source "github"
+
+    - name: Upload NugetPackage to Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: "${{ inputs.nugetPackageName }}.${{ steps.gitversion.outputs.nuGetVersionV2 }}"
+        path: "${{ inputs.nugetPackageName }}.${{ steps.gitversion.outputs.nuGetVersionV2 }}.nupkg"
+        retention-days: 1
