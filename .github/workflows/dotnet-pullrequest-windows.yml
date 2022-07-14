@@ -43,14 +43,14 @@ jobs:
       run: dotnet test --no-build --verbosity normal --logger:"trx;LogFileName=TestResults.xml" ${{ inputs.solutionPath }}
 
     - name: Upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Event File
         path: ${{ github.event_path }}
 
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Unit Test Results
         path: "*testresults.xml"
@@ -69,12 +69,12 @@ jobs:
 
     steps:
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: artifacts
       
