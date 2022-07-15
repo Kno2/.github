@@ -8,9 +8,11 @@ on:
         type: string
       nugetPackageName:
         required: true
-        type: string
-      
-
+        type: string 
+env:
+      OCTOPUS_API_KEY: ${{ secrets.OCTOPUSSERVERAPIKEY  }}
+      OCTOPUS_HOST: ${{ secrets.OCTOPUSSERVERURL }}
+      OCTOPUS_SPACE: ${{ secrets.OCTOPUSSPACENAME }}
 jobs:
   release:
     name: Update Octo and Publish Packages
@@ -20,10 +22,6 @@ jobs:
       contents: read
       id-token: write
       packages: read
-    env:
-      OCTOPUS_API_KEY: ${{ secrets.OCTOPUSSERVERAPIKEY  }}
-      OCTOPUS_HOST: ${{ secrets.OCTOPUSSERVERURL }}
-      OCTOPUS_SPACE: ${{ secrets.OCTOPUSSPACENAME }}
     steps:
     - uses: actions/checkout@v3
       with:
