@@ -1,7 +1,7 @@
 **PR Checklist:**
 
 - [ ] Did you wrap code in a feature toggle? Feature named: **FEATURETOGGLENAMEHERE**
-- The following tests have been created and can run via TeamCity:
+- The following tests have been created and can run via Build Automation:
   - [ ] Unit Tests
   - [ ] API Tests
   - [ ] Integration Tests
